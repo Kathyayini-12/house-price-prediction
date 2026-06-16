@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>House Price Prediction – Task 01 | Prodigy Infotech</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    /* ── Base ── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f5f7fa; color: #1e293b; font-size: 14px; line-height: 1.6; }
+    .container { max-width: 1000px; margin: 0 auto; padding: 0 20px; }
+
+    /* ── Header ── */
+    header { background: #fff; border-bottom: 2px solid #3b82f6; padding: 28px 0 22px; margin-bottom: 32px; }
+    .badge { display: inline-block; background: #eff6ff; color: #3b82f6; border: 1px solid #bfdbfe; border-radius: 4px; font-size: 11px; font-weight: 600; padding: 3px 10px; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 10px; }
+    h1 { font-size: clamp(22px, 4vw, 32px); font-weight: 700; color: #0f172a; }
+    .subtitle { color: #64748b; font-size: 13px; margin-top: 6px; }
+
+    /* ── Section ── */
+    .section { margin-bottom: 40px; }
+    .section-title { font-size: 17px; font-weight: 700; color: #0f172a; border-left: 3px solid #3b82f6; padding-left: 12px; margin-bottom: 16px; }
+
+    /* ── Metric Cards ── */
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; }
+    .metric-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px 20px; }
+    .metric-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 6px; }
+    .metric-value { font-size: 26px; font-weight: 700; color: #1e40af; }
+    .metric-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+    .metric-card.green .metric-value { color: #16a34a; }
+
+    /* ── Charts ── */
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 640px) { .charts-grid { grid-template-columns: 1fr; } }
+    .chart-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; }
+    .chart-title { font-size: 13px; font-weight: 600; color: #0f172a; margin-bottom: 2px; }
+    .chart-note { font-size: 11px; color: #94a3b8; margin-bottom: 14px; }
+    canvas { max-height: 240px; }
+
+    /* ── Equation box ── */
+    .eq-box { background: #f8fafc; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; border-radius: 6px; padding: 18px 20px; font-family: 'Courier New', monospace; font-size: 13px; color: #1e40af; margin-bottom: 20px; }
+    .eq-box .comment { color: #94a3b8; font-size: 12px; }
+
+    /* ── Coef cards ── */
+    .coef-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+    .coef-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px 16px; }
+    .coef-name { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 4px; }
+    .coef-val { font-size: 20px; font-weight: 700; }
+    .coef-val.pos { color: #16a34a; } .coef-val.neg { color: #dc2626; }
+    .coef-desc { font-size: 11px; color: #64748b; margin-top: 4px; }
+
+    /* ── Heatmap ── */
+    .heatmap-wrap { display: grid; grid-template-columns: 90px repeat(4, 1fr); gap: 3px; font-size: 11px; }
+    .hm-cell { display: flex; align-items: center; justify-content: center; border-radius: 4px; padding: 9px 4px; font-weight: 500; }
+    .hm-label { color: #64748b; justify-content: flex-end; padding-right: 6px; }
+    .hm-header { color: #94a3b8; }
+
+    /* ── Predictor ── */
+    .predictor { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; }
+    .predictor h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .predictor p { color: #64748b; font-size: 12px; margin-bottom: 18px; }
+    .inputs-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px; }
+    @media (max-width: 560px) { .inputs-row { grid-template-columns: 1fr; } }
+    .input-group label { display: block; font-size: 11px; color: #64748b; margin-bottom: 6px; font-weight: 500; }
+    .input-group input[type="range"] { width: 100%; accent-color: #3b82f6; cursor: pointer; }
+    .input-group .val { font-size: 18px; font-weight: 700; color: #3b82f6; margin-top: 4px; }
+    .predict-btn { background: #3b82f6; color: #fff; border: none; border-radius: 6px; padding: 10px 26px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s; }
+    .predict-btn:hover { background: #2563eb; }
+    .result-box { margin-top: 16px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 16px; display: none; }
+    .result-box.show { display: block; }
+    .result-price { font-size: 30px; font-weight: 700; color: #1d4ed8; }
+    .result-formula { font-size: 11px; color: #64748b; margin-top: 4px; font-family: monospace; }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; font-size: 13px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; }
+    th { text-align: left; padding: 10px 14px; font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .07em; background: #f8fafc; border-bottom: 1px solid #e2e8f0; }
+    td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+    tr:last-child td { border-bottom: none; }
+    .price-tag { font-weight: 700; color: #16a34a; }
+
+    /* ── Conclusion ── */
+    .conclusion-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 560px) { .conclusion-grid { grid-template-columns: 1fr; } }
+    .conclusion-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; }
+    .conclusion-card h4 { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
+    .conclusion-card li { font-size: 12px; color: #475569; padding: 3px 0; list-style: none; }
+    .conclusion-card li::before { content: '• '; color: #3b82f6; font-weight: 700; }
+
+    /* ── Footer ── */
+    footer { text-align: center; padding: 24px 0; margin-top: 40px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8; }
+    footer strong { color: #3b82f6; }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="container">
+    <div class="badge">Internship Task-01 · Prodigy Infotech</div>
+    <h1>🏠 House Price Prediction</h1>
+    <p class="subtitle">Linear Regression Model &nbsp;·&nbsp; Dataset: Kaggle – House Prices: Advanced Regression Techniques<br>
+    Features Used: GrLivArea, BedroomAbvGr, FullBath → Target: SalePrice</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- STEP 1-3: DATASET OVERVIEW -->
+  <div class="section">
+    <div class="section-title">Steps 1–3 · Dataset Overview &amp; Pre-processing</div>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">📦 Total Samples</div>
+        <div class="metric-value">1,458</div>
+        <div class="metric-sub">After outlier removal</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">🎯 Training Set</div>
+        <div class="metric-value">1,166</div>
+        <div class="metric-sub">80% of dataset</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">🧪 Test Set</div>
+        <div class="metric-value">292</div>
+        <div class="metric-sub">20% of dataset</div>
+      </div>
+      <div class="metric-card green">
+        <div class="metric-label">🔍 Missing Values</div>
+        <div class="metric-value">0</div>
+        <div class="metric-sub">All features clean</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 8: MODEL EVALUATION -->
+  <div class="section">
+    <div class="section-title">Step 8 · Model Evaluation Metrics</div>
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-label">📉 MAE</div>
+        <div class="metric-value">$34,859</div>
+        <div class="metric-sub">Mean Absolute Error</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">📊 MSE</div>
+        <div class="metric-value">2.28B</div>
+        <div class="metric-sub">Mean Squared Error</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">📐 RMSE</div>
+        <div class="metric-value">$47,698</div>
+        <div class="metric-sub">Root Mean Squared Error</div>
+      </div>
+      <div class="metric-card green">
+        <div class="metric-label">⭐ R² Score</div>
+        <div class="metric-value">0.5812</div>
+        <div class="metric-sub">58.12% variance explained</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 7: MODEL EQUATION -->
+  <div class="section">
+    <div class="section-title">Step 7 · Trained Model Equation</div>
+    <div class="eq-box">
+      <span class="comment"># Linear Regression formula learned from training data</span><br>
+      SalePrice = 50,098.07<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ 122.13 &times; GrLivArea<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&minus; 31,610.72 &times; BedroomAbvGr<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ 23,234.18 &times; FullBath
+    </div>
+    <div class="coef-grid">
+      <div class="coef-card">
+        <div class="coef-name">Intercept</div>
+        <div class="coef-val pos">$50,098</div>
+        <div class="coef-desc">Base price (no features)</div>
+      </div>
+      <div class="coef-card">
+        <div class="coef-name">GrLivArea (per sq ft)</div>
+        <div class="coef-val pos">+$122.13</div>
+        <div class="coef-desc">Each extra sq ft adds ~$122</div>
+      </div>
+      <div class="coef-card">
+        <div class="coef-name">BedroomAbvGr (per room)</div>
+        <div class="coef-val neg">&minus;$31,611</div>
+        <div class="coef-desc">Negatively correlated (size-adjusted)</div>
+      </div>
+      <div class="coef-card">
+        <div class="coef-name">FullBath (per bathroom)</div>
+        <div class="coef-val pos">+$23,234</div>
+        <div class="coef-desc">Each extra bathroom adds ~$23k</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 9: VISUALIZATIONS -->
+  <div class="section">
+    <div class="section-title">Step 9 · Visualizations</div>
+    <div class="charts-grid" style="margin-bottom:16px">
+      <div class="chart-card">
+        <div class="chart-title">Actual vs Predicted Sale Price</div>
+        <div class="chart-note">Each point = 1 test sample · Red = perfect prediction line</div>
+        <canvas id="scatterChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Sale Price Distribution</div>
+        <div class="chart-note">Histogram of SalePrice across all 1,458 houses</div>
+        <canvas id="histChart"></canvas>
+      </div>
+    </div>
+    <div class="chart-card" style="margin-bottom:16px">
+      <div class="chart-title">Correlation Heatmap</div>
+      <div class="chart-note">Pearson correlation between features and target</div>
+      <div id="heatmap"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Residuals Distribution</div>
+      <div class="chart-note">Difference between actual and predicted (should be centered near 0)</div>
+      <canvas id="residChart"></canvas>
+    </div>
+  </div>
+
+  <!-- STEP 10: LIVE PREDICTOR -->
+  <div class="section">
+    <div class="section-title">Step 10 · Live House Price Predictor</div>
+    <div class="predictor">
+      <h3>🏠 Try It Yourself</h3>
+      <p>Adjust the sliders to see a prediction using the trained model coefficients.</p>
+      <div class="inputs-row">
+        <div class="input-group">
+          <label>Square Footage (GrLivArea)</label>
+          <input type="range" id="sqft" min="500" max="4500" value="1800" step="50"
+                 oninput="updateVal('sqft','sqftVal',' sq ft'); predict()">
+          <div class="val" id="sqftVal">1,800 sq ft</div>
+        </div>
+        <div class="input-group">
+          <label>Bedrooms (BedroomAbvGr)</label>
+          <input type="range" id="beds" min="1" max="8" value="3" step="1"
+                 oninput="updateVal('beds','bedsVal',' beds'); predict()">
+          <div class="val" id="bedsVal">3 beds</div>
+        </div>
+        <div class="input-group">
+          <label>Full Bathrooms (FullBath)</label>
+          <input type="range" id="baths" min="1" max="4" value="2" step="1"
+                 oninput="updateVal('baths','bathsVal',' baths'); predict()">
+          <div class="val" id="bathsVal">2 baths</div>
+        </div>
+      </div>
+      <button class="predict-btn" onclick="predict()">Predict Price</button>
+      <div class="result-box" id="result">
+        <div style="font-size:12px;color:#64748b;margin-bottom:4px">Estimated Sale Price</div>
+        <div class="result-price" id="predPrice">$0</div>
+        <div class="result-formula" id="predFormula"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PREDICTION EXAMPLES TABLE -->
+  <div class="section">
+    <div class="section-title">Sample Predictions</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Sq Footage</th><th>Bedrooms</th><th>Bathrooms</th><th>Predicted Price</th>
+        </tr>
+      </thead>
+      <tbody id="examplesBody"></tbody>
+    </table>
+  </div>
+
+  <!-- STEPS 11-15: CONCLUSION -->
+  <div class="section">
+    <div class="section-title">Steps 11–15 · Conclusion &amp; Future Improvements</div>
+    <div class="conclusion-grid">
+      <div class="conclusion-card">
+        <h4>✅ What We Achieved</h4>
+        <ul>
+          <li>Loaded &amp; explored Kaggle House Prices dataset (1,460 rows)</li>
+          <li>Handled missing values and removed outliers</li>
+          <li>Trained Linear Regression with 3 features</li>
+          <li>Model explains 58.12% of price variance (R² = 0.5812)</li>
+          <li>Average prediction error: ±$34,859 (MAE)</li>
+          <li>GrLivArea has the strongest correlation (0.72) with price</li>
+        </ul>
+      </div>
+      <div class="conclusion-card">
+        <h4>🚀 Future Improvements</h4>
+        <ul>
+          <li>Add Neighborhood, YearBuilt, GarageArea features</li>
+          <li>Apply log-transformation to SalePrice (right-skewed)</li>
+          <li>Try Ridge / Lasso regression for regularization</li>
+          <li>Use Random Forest or XGBoost (non-linear patterns)</li>
+          <li>Implement K-Fold cross-validation</li>
+          <li>Build a Streamlit web app for live predictions</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <strong>Task-01 · House Price Prediction · Linear Regression</strong><br>
+    Internship Project · Prodigy Infotech · Dataset: Kaggle House Prices
+  </footer>
+
+</div><!-- /container -->
+
+<script>
+// ── Model coefficients from sklearn LinearRegression ──
+const INTERCEPT = 50098.07;
+const COEF_SQFT = 122.1317;
+const COEF_BED  = -31610.72;
+const COEF_BATH = 23234.18;
+
+// ── Real test data (actual vs predicted) ──
+const actual    = [260000,178000,135000,175000,110000,67000,246578,118000,187500,260000,147000,132500,195400,266000,253000,127500,205000,287000,194500,124500,191000,248900,91300,179400,226000,135000,244000,190000,106000,79500,119000,64500,135000,35311,253293,243000,86000,115000,194201,171000,284000,143000,119900,143000,130250,174000,107500,181000,172500,120000,242000,176432,179540,230000,134500,213000,132000,239500,125500,284000,197000,239000,280000,158000,195000,115000,115000,113000,139000,149000,153900,135750,132000,181000,127000,85000,136500,129000,192500,372500,68400,119500,129900,254000,112000,159000,174000,280000,225000,241500,333168,187500,112000,185750,105900,158000,174500,107000,136500,264132,118500,275000,123000,127500,97000,107500,154300,181000,145000,197500,140000,145000,122500,149500,83500,129500,115000,230000,133000,128200,237000,337000,153500,207000,137500,110000,132500,236000,149900,287090,225000,140000,335000,124900,145000,108000,311500,125000,297000,278000,109000,311872,217500,133000,193879,114500,200624,340000,155000,180000,200141,153575,281000,134432,118500,235128,276000,120000,140000,165600,134500,240000,103200,135500,137500,86000,135000,265979,144500,175900,239000,205950,100000,165000,152000,155835,244000,219500,451950,155000,113000,360000,135000,157900,200500,132500,301000,92000,192000,283463,275000,369900,230500,277000,102776,119200,181134,262500,318061,131000];
+const predicted = [213510,213266,128599,174184,187029,115632,216542,130654,184687,188595,142645,95013,180880,238547,242455,89812,259432,387282,214731,84021,313780,202763,118319,185053,182367,148141,273233,187568,160749,124303,108304,88347,149657,77110,251127,233683,84000,135662,158105,115043,200686,221621,96357,118218,93059,166216,143011,196635,214121,115632,302221,162215,179558,203740,100509,218518,123449,248440,176209,251615,194213,193603,225968,112011,204472,106472,137759,130776,115409,145289,179780,126380,114411,208136,95135,114310,186052,124426,218640,251615,147875,94525,107959,195047,95746,204961,209336,220572,244064,176576,287543,141697,174500,183588,98045,154980,169514,114921,177014,217275,187632,234129,84998,115632,117830,111113,216240,197633,182122,198265,210579,107471,176820,149484,111867,229847,127989,226456,135396,87685,249783,290575,196635,172588,154226,87441,119339,245652,110158,194458,270208,178041,234028,105373,162308,131308,217145,87685,211556,278384,136395,212533,202885,170613,191383,122126,300519,300956,174672,176382,162459,148995,242333,164068,158622,194702,316101,148119,151122,185053,133219,210579,149441,148629,131674,94503,172373,269317,145289,256580,239891,205083,130654,153270,167976,179558,259432,205593,282148,126890,160109,239158,119174,123003,401866,123836,303543,118664,176504,218640,234373,281028,238181,253569,153981,142257,165390,192992,261609,127256];
+
+// ── On page load, build all charts and initial prediction ──
+window.addEventListener('DOMContentLoaded', () => {
+  buildScatter();
+  buildHistogram();
+  buildHeatmap();
+  buildResiduals();
+  buildExamples();
+  predict();
+});
+
+// Chart 1: Actual vs Predicted scatter plot
+function buildScatter() {
+  new Chart(document.getElementById('scatterChart'), {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'Predictions', data: actual.map((a, i) => ({ x: a, y: predicted[i] })),
+          pointRadius: 3, backgroundColor: 'rgba(59,130,246,0.4)', borderColor: 'rgba(59,130,246,0.7)', borderWidth: 0.5 },
+        { label: 'Perfect Fit', data: [{ x: 34000, y: 34000 }, { x: 460000, y: 460000 }],
+          type: 'line', borderColor: '#ef4444', borderWidth: 2, borderDash: [6, 4], pointRadius: 0 }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#64748b', font: { size: 10 } } },
+        tooltip: { callbacks: { label: p => `Actual: $${p.raw.x.toLocaleString()}  Pred: $${p.raw.y.toLocaleString()}` } } },
+      scales: {
+        x: { ticks: { color: '#94a3b8', callback: v => `$${(v/1000).toFixed(0)}k` }, grid: { color: '#f1f5f9' } },
+        y: { ticks: { color: '#94a3b8', callback: v => `$${(v/1000).toFixed(0)}k` }, grid: { color: '#f1f5f9' } }
+      }
+    }
+  });
+}
+
+// Chart 2: Price distribution histogram
+function buildHistogram() {
+  const bins  = [34900,70405,105910,141415,176920,212425,247930,283435,318940,354445,389950,425455,460960,496465,531970,567475,602980,638485,673990,709495,745000];
+  const vals  = [22,120,376,334,232,145,93,50,34,19,14,7,4,1,3,1,2,0,0,1];
+  new Chart(document.getElementById('histChart'), {
+    type: 'bar',
+    data: {
+      labels: vals.map((v, i) => `$${Math.round(bins[i]/1000)}k`),
+      datasets: [{ data: vals, backgroundColor: 'rgba(59,130,246,0.5)', borderColor: 'rgba(59,130,246,0.8)', borderWidth: 1 }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#94a3b8', font: { size: 9 }, maxRotation: 45 }, grid: { display: false } },
+        y: { ticks: { color: '#94a3b8' }, grid: { color: '#f1f5f9' } }
+      }
+    }
+  });
+}
+
+// Chart 3: Correlation heatmap (rendered as colored divs)
+function buildHeatmap() {
+  const labels = ['GrLivArea', 'Bedrooms', 'FullBath', 'SalePrice'];
+  const short  = ['SqFt', 'Beds', 'Bath', 'Price'];
+  const corr   = [
+    [1.0000, 0.5324, 0.6378, 0.7188],
+    [0.5324, 1.0000, 0.3618, 0.1644],
+    [0.6378, 0.3618, 1.0000, 0.5594],
+    [0.7188, 0.1644, 0.5594, 1.0000]
+  ];
+
+  // Maps correlation value to a blue-white-red color
+  function cellColor(v) {
+    const r = v > 0 ? Math.round(59 + (196 - 59) * v)  : Math.round(59  + (239 - 59) * Math.abs(v));
+    const g = v > 0 ? Math.round(130 - 130 * v)         : Math.round(130 - 130 * Math.abs(v));
+    const b = v > 0 ? Math.round(246 - (246 - 68) * v)  : Math.round(246 - (246 - 68) * Math.abs(v));
+    return `rgb(${r},${g},${b})`;
+  }
+
+  let html = `<div class="heatmap-wrap">`;
+  html += `<div class="hm-cell hm-header"></div>`;
+  short.forEach(l => html += `<div class="hm-cell hm-header" style="justify-content:center;color:#64748b">${l}</div>`);
+  corr.forEach((row, ri) => {
+    html += `<div class="hm-cell hm-label">${short[ri]}</div>`;
+    row.forEach((v, ci) => {
+      const bg  = cellColor(v);
+      const txt = (v > 0.5 || v < -0.3) ? '#fff' : '#1e293b';
+      html += `<div class="hm-cell" style="background:${bg};color:${txt}" title="${labels[ri]} vs ${labels[ci]}: ${v.toFixed(4)}">${v.toFixed(2)}</div>`;
+    });
+  });
+  html += `</div>`;
+  document.getElementById('heatmap').innerHTML = html;
+}
+
+// Chart 4: Residuals histogram
+function buildResiduals() {
+  const residuals = actual.map((a, i) => a - predicted[i]);
+  const mn = Math.min(...residuals), mx = Math.max(...residuals);
+  const bins = 20, step = (mx - mn) / bins;
+  const counts = new Array(bins).fill(0);
+  residuals.forEach(r => {
+    let b = Math.min(Math.floor((r - mn) / step), bins - 1);
+    counts[b]++;
+  });
+  new Chart(document.getElementById('residChart'), {
+    type: 'bar',
+    data: {
+      labels: counts.map((c, i) => `$${Math.round((mn + i * step) / 1000)}k`),
+      datasets: [{
+        data: counts,
+        backgroundColor: counts.map((_, i) => (mn + (i + 0.5) * step) < 0 ? 'rgba(239,68,68,0.5)' : 'rgba(22,163,74,0.5)'),
+        borderColor:     counts.map((_, i) => (mn + (i + 0.5) * step) < 0 ? 'rgba(239,68,68,0.8)' : 'rgba(22,163,74,0.8)'),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#94a3b8', font: { size: 9 }, maxRotation: 45 }, grid: { display: false } },
+        y: { ticks: { color: '#94a3b8' }, grid: { color: '#f1f5f9' } }
+      }
+    }
+  });
+}
+
+// Build the sample predictions table
+function buildExamples() {
+  const examples = [[800,2,1],[1200,3,1],[1500,3,2],[2000,4,2],[2500,3,3],[3000,4,3],[3500,5,3],[4000,5,4]];
+  document.getElementById('examplesBody').innerHTML = examples.map(([sq, bd, ba]) => {
+    const price = Math.round(INTERCEPT + COEF_SQFT * sq + COEF_BED * bd + COEF_BATH * ba);
+    return `<tr>
+      <td>${sq.toLocaleString()} sq ft</td>
+      <td>${bd} bedroom${bd > 1 ? 's' : ''}</td>
+      <td>${ba} bathroom${ba > 1 ? 's' : ''}</td>
+      <td class="price-tag">$${price.toLocaleString()}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Slider value display update
+function updateVal(inputId, displayId, suffix) {
+  document.getElementById(displayId).textContent = parseInt(document.getElementById(inputId).value).toLocaleString() + suffix;
+}
+
+// Live predictor using trained coefficients
+function predict() {
+  const sqft  = parseInt(document.getElementById('sqft').value);
+  const beds  = parseInt(document.getElementById('beds').value);
+  const baths = parseInt(document.getElementById('baths').value);
+  const price = Math.round(INTERCEPT + COEF_SQFT * sqft + COEF_BED * beds + COEF_BATH * baths);
+  document.getElementById('predPrice').textContent = `$${price.toLocaleString()}`;
+  document.getElementById('predFormula').textContent =
+    `= 50,098 + 122.13×${sqft.toLocaleString()} − 31,611×${beds} + 23,234×${baths}`;
+  document.getElementById('result').classList.add('show');
+}
+</script>
+</body>
+</html>
